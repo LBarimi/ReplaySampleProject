@@ -9,11 +9,18 @@ public sealed class PlayerUnit : UnitBase
     {
         base.Init();
         
+        ClearRecordVariables();
+        
+        SetVisualKey("Visual_UnityChan");
+        
         InitStat();
         InitVisual();
         InitInput();
         InitAnimator();
         InitPhysics();
+
+        var position = transform.position;
+        ReplayRecorder.Set(REPLAY_ACTION_TYPE.SPAWN_UNIT, GetVisualKey(), position.x, position.y, position.z);
     }
 
     protected override void InitStat()
@@ -141,15 +148,59 @@ public sealed class PlayerUnit : UnitBase
         var lookDir = new Vector3(inputVector.x, 0, inputVector.y);
         var targetRotation = Quaternion.LookRotation(lookDir);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, GetStatController().GetStat(STAT_TYPE.ROTATIONSPEED).GetFinal() * deltaTime);
+        
+        // 녹화용 데이터 설정.
+        var velocity = GetRigidBody().velocity;
+
+        var vx = velocity.x.ToPercentage();
+        var vy = velocity.y.ToPercentage();
+        var vz = velocity.z.ToPercentage();
+        
+        if (vx != _vx || vy != _vy || vz != _vz)
+        {
+            _vx = vx;
+            _vy = vy;
+            _vz = vz;
+            
+            ReplayRecorder.Set(REPLAY_ACTION_TYPE.SYNC_VELOCITY, velocity.x, velocity.y, velocity.z);
+        }
     }
 
-    // 이 함수는 FixedUpdate랑 같은 프레임에 호출된다.
-    // rigidbody.velocity를 설정하면 물리 연산이 엔진 내부에서 처리되기 때문에,
+    // 이 함수는 FixedUpdate랑 동일한 프레임에 호출된다.
+    // rigidbody의 물리 연산이 엔진 내부에서 처리되기 때문에,
     // 여기서 위치와 회전 값을 다시 조정한다.
     // 조정은 소수점 둘째 자리까지만 남기고, 그 이하 숫자는 버린다.
     public override void OnFixedAfterUpdate(float deltaTime)
     {
         transform.SetTruncatePosition();
         transform.SetTruncateRotation();
+        
+        // 녹화용 데이터 설정.
+        var pos = transform.position;
+        var quaternion = transform.rotation;
+
+        var x = pos.x.ToPercentage();
+        var y = pos.y.ToPercentage();
+        var z = pos.z.ToPercentage();
+        
+        var qx = quaternion.x.ToPercentage();
+        var qy = quaternion.y.ToPercentage();
+        var qz = quaternion.z.ToPercentage();
+        var qw = quaternion.w.ToPercentage();
+
+        // Transform의 정보가 변경되었는가
+        if (x != _x || y != _y || z != _z || qx != _qx || qy != _qy || qz != _qz || qw != _qw)
+        {
+            _x = x;
+            _y = y;
+            _z = z;
+            
+            _qx = qx;
+            _qy = qy;
+            _qz = qz;
+            _qw = qw;
+
+            ReplayRecorder.Set(REPLAY_ACTION_TYPE.SYNC_TRANSFORM, pos.x, pos.y, pos.z, quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+        }
     }
 }

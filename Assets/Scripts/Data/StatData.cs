@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class StatData
+public sealed class StatData
 {
     private int _baseValue;
     

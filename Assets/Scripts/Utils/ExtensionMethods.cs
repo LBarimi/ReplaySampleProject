@@ -5,6 +5,11 @@ using UnityEngine;
 
 public static class ExtensionMethods
 {
+    public static float ConvertBytesToKB(this int bytes)
+    {
+        return bytes / 1024f;
+    }
+    
     public static float ToRate(this int value)
     {
         return value * 0.01f;

@@ -14,6 +14,7 @@ public sealed class ReplayManager : MonoBehaviour
     
     private ulong _curFixedStep;
 
+    // 현재 리플레이 재생 중인지.
     public static bool IsReplaying() => Instance != null && Instance._isReplaying;
 
     public static void SetReplaying(bool isReplaying)
@@ -26,6 +27,19 @@ public sealed class ReplayManager : MonoBehaviour
     
     private bool _isReplaying;
     
+    // 현재 녹화 상태인지.
+    public static bool IsRecording() => Instance != null && Instance._isRecording;
+
+    public static void SetRecording(bool isRecording)
+    {
+        if (Instance == null)
+            return;
+
+        Instance._isRecording = isRecording;
+    }
+    
+    private bool _isRecording;
+
     private void Awake()
     {
         Instance = this;
@@ -41,6 +55,12 @@ public sealed class ReplayManager : MonoBehaviour
 
     private void FixedUpdate()
     {
+        // (임시) 라운드 시작. 
+        if (_curFixedStep == 0)
+        {
+            RoundManager.Instance.StartRound();
+        }
+        
         _curFixedStep++;
     }
 }

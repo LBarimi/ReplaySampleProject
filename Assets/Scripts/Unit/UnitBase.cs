@@ -10,6 +10,14 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     public ulong GetId() 
         => id;
 
+    public string _visualKey;
+
+    public void SetVisualKey(string visualKey)
+        => _visualKey = visualKey;
+
+    public string GetVisualKey()
+        => _visualKey;
+
     // 스탯 관리.
     private StatController _statController;
 
@@ -54,6 +62,29 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
 
     public Rigidbody GetRigidBody()
         => _rigid;
+    
+    // 리플레이 녹화용 변수.
+    protected int _x, _y, _z;
+    protected int _qx, _qy, _qz, _qw;
+    protected int _vx, _vy, _vz;
+
+    protected void ClearRecordVariables()
+    {
+        const int INVALID_VALUE = -10000;
+        
+        _x = INVALID_VALUE;
+        _y = INVALID_VALUE;
+        _z = INVALID_VALUE;
+
+        _qx = INVALID_VALUE;
+        _qy = INVALID_VALUE;
+        _qz = INVALID_VALUE;
+        _qw = INVALID_VALUE;
+
+        _vx = INVALID_VALUE;
+        _vy = INVALID_VALUE;
+        _vz = INVALID_VALUE;
+    }
     
     protected virtual void Awake()
     {
@@ -104,7 +135,7 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     public virtual void OnFixedUpdate(float deltaTime)
     {
     }
-    
+
     public virtual void OnFixedAfterUpdate(float deltaTime)
     {
     }

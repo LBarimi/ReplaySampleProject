@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class InputData
+public sealed class InputData
 {
     private KeyCode _keyCode;
     private bool _isDown;
