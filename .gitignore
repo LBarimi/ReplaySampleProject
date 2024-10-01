@@ -82,13 +82,5 @@ crashlytics-build.properties
 
 # StyleCop
 StyleCopReport.xml
-Tools/SheetLoader/TableToJson.cs
 UserSettings/Layouts/default-2023.dwlt
-Tools/SheetLoader/bin/Release/net8.0/publish/SheetLoader.dll
-Tools/SheetLoader/bin/Release/net8.0/publish/SheetLoader.exe
-Tools/SheetLoader/bin/Release/net8.0/publish/SheetLoader.pdb
-Tools/SheetLoader/bin/Release/net8.0/SheetLoader.dll
-Tools/SheetLoader/bin/Release/net8.0/SheetLoader.exe
-Tools/SheetLoader/bin/Release/net8.0/SheetLoader.pdb
-Tools/SheetLoader/SheetLoader.csproj
 UserSettings/EditorUserSettings.asset
