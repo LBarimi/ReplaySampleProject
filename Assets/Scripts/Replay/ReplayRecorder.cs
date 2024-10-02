@@ -130,6 +130,9 @@ public class ReplayRecorder
         {
             // 쌓인 데이터 내보내기.
             Flush();
+        
+            // 내보낸 이후 캐시 목록 정리.
+            _cacheDataList.Clear();
         }
     }
     
@@ -149,11 +152,6 @@ public class ReplayRecorder
     // 녹화된 데이터 내보내기.
     private static void Flush()
     {
-        if (_cacheDataList.IsNullOrEmpty())
-            return;
-
         ReplayBinaryDataManager.SaveDataAsync(_cacheDataList.ToList(), _curChunkCount++);
-        
-        _cacheDataList.Clear();
     }
 }
