@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public enum REPLAY_ACTION_TYPE
@@ -29,7 +30,13 @@ public enum REPLAY_ACTION_TYPE
 /// </summary>
 public class ReplayRecorder
 {
-    private static List<ReplayRecordData> _cache = new();
+    private static List<ReplayRecordData> _cacheDataList = new();
+
+    // 데이터 분할 기준 : default 3kb.
+    private static readonly float CHUNK_SIZE = 3;
+
+    // 데이터가 현재까지 분할된 횟수.
+    private static int _curChunkCount;
     
     // 녹화 시작.
     public static void Play()
@@ -37,9 +44,12 @@ public class ReplayRecorder
         if (ReplayManager.IsReplaying())
             return;
         
-        _cache.Clear();
+        _cacheDataList.Clear();
+        _curChunkCount = 0;
         
         ReplayManager.SetRecording(true);
+        
+        ReplayBinaryDataManager.Clear();
     }
 
     // 녹화 종료.
@@ -48,7 +58,8 @@ public class ReplayRecorder
         if (ReplayManager.IsRecording() == false)
             return;
         
-        _cache.Clear();
+        _cacheDataList.Clear();
+        _curChunkCount = 0;
         
         ReplayManager.SetRecording(false);
     }
@@ -65,7 +76,7 @@ public class ReplayRecorder
         data.SetKey(key);
         data.SetPosition(x.ToPercentage(), y.ToPercentage(), z.ToPercentage());
         
-        _cache.Add(data);
+        Process(data);
     }
     
     // input. (boolean)
@@ -78,7 +89,7 @@ public class ReplayRecorder
         data.SetCurFixedStep(ReplayManager.GetCurFixedStep());
         data.SetInput(isInput);
         
-        _cache.Add(data);
+        Process(data);
     }
     
     // sync transform. (position|quaternion)
@@ -93,7 +104,7 @@ public class ReplayRecorder
         data.SetPosition(x.ToPercentage(), y.ToPercentage(), z.ToPercentage());
         data.SetQuaternion(qx.ToPercentage(), qy.ToPercentage(), qz.ToPercentage(), qw.ToPercentage());
 
-        _cache.Add(data);
+        Process(data);
     }
 
     public static void Set(REPLAY_ACTION_TYPE replayActionType, float vx, float vy, float vz)
@@ -105,22 +116,44 @@ public class ReplayRecorder
         data.SetCurFixedStep(ReplayManager.GetCurFixedStep());
         data.SetType(replayActionType);
         data.SetVelocity(vx.ToPercentage(), vy.ToPercentage(), vz.ToPercentage());
-        
-        _cache.Add(data);
+
+        Process(data);
     }
 
-    public static void ShowCurCacheSize()
+    private static void Process(ReplayRecordData data)
     {
-        var totalMemory = _cache.Sum(data => data.GetSizeInBytes());
-        var kb = totalMemory.ConvertBytesToKB().Truncate();
-        
-        Debug.Log($"[Cur CacheSize][{totalMemory} byte][{kb} kb]");
+        // 캐시 데이터 추가.
+        _cacheDataList.Add(data);
+
+        // 분할저장의 기준을 초과했는지 검사하고
+        if (IsExceedingChunkSize())
+        {
+            // 쌓인 데이터 내보내기.
+            Flush();
+        }
+    }
+    
+    // 단위 : KB.
+    private static float GetSize()
+    {
+        var totalMemory = _cacheDataList.Sum(data => data.GetJsonSizeInBytes());
+        return totalMemory.ConvertBytesToKB().Truncate();
+    }
+
+    // 분할저장의 기준을 초과했는지 검사.
+    private static bool IsExceedingChunkSize()
+    {
+        return GetSize() >= CHUNK_SIZE;
     }
     
     // 녹화된 데이터 내보내기.
-    public static void Flush()
+    private static void Flush()
     {
-        if (_cache.IsNullOrEmpty())
+        if (_cacheDataList.IsNullOrEmpty())
             return;
+
+        ReplayBinaryDataManager.SaveDataAsync(_cacheDataList.ToList(), _curChunkCount++);
+        
+        _cacheDataList.Clear();
     }
 }

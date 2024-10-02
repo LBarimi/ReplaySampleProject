@@ -8,6 +8,19 @@ public sealed class RoundManager : MonoBehaviour
     {
         Instance = this;
     }
+
+    public void StartReplay()
+    {
+        // 분할 저장 개수를 가져온다.
+        var totalChunkCount = ReplayBinaryDataManager.GetTotalChunkCount();
+
+        for (var i = 0; i < totalChunkCount; i++)
+        {
+            var replayDataList = ReplayBinaryDataManager.LoadData(i);
+            
+            // TODO.
+        }
+    }
     
     public void StartRound()
     {

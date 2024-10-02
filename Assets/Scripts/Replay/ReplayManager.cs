@@ -58,6 +58,7 @@ public sealed class ReplayManager : MonoBehaviour
         // (임시) 라운드 시작. 
         if (_curFixedStep == 0)
         {
+            //RoundManager.Instance.StartReplay();
             RoundManager.Instance.StartRound();
         }
         

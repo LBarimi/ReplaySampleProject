@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class UnitBase : MonoBehaviour, IUpdater, IObject
@@ -10,7 +11,7 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     public ulong GetId() 
         => id;
 
-    public string _visualKey;
+    public string _visualKey { get; set; }
 
     public void SetVisualKey(string visualKey)
         => _visualKey = visualKey;
@@ -63,29 +64,37 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     public Rigidbody GetRigidBody()
         => _rigid;
     
-    // 리플레이 녹화용 변수.
-    protected int _x, _y, _z;
-    protected int _qx, _qy, _qz, _qw;
-    protected int _vx, _vy, _vz;
-
-    protected void ClearRecordVariables()
-    {
-        const int INVALID_VALUE = -10000;
-        
-        _x = INVALID_VALUE;
-        _y = INVALID_VALUE;
-        _z = INVALID_VALUE;
-
-        _qx = INVALID_VALUE;
-        _qy = INVALID_VALUE;
-        _qz = INVALID_VALUE;
-        _qw = INVALID_VALUE;
-
-        _vx = INVALID_VALUE;
-        _vy = INVALID_VALUE;
-        _vz = INVALID_VALUE;
-    }
+    // 업데이트 함수에 연결된 콜백 목록.
+    protected Action<float> _onFixedUpdate_Before;
+    protected Action<float> _onFixedUpdate_After;
     
+    protected Action<float> _onFixedAfterUpdate_Before;
+    protected Action<float> _onFixedAfterUpdate_After;
+    
+    public void SetFixedUpdateBefore(Action<float> callback) 
+        => _onFixedUpdate_Before += callback;
+
+    public void SetFixedUpdateAfter(Action<float> callback) 
+        => _onFixedUpdate_After += callback;
+
+    public void SetFixedAfterUpdateBefore(Action<float> callback) 
+        => _onFixedAfterUpdate_Before += callback;
+
+    public void SetFixedAfterUpdateAfter(Action<float> callback) 
+        => _onFixedAfterUpdate_After += callback;
+
+    public void RemoveFixedUpdateBefore(Action<float> callback) 
+        => _onFixedUpdate_Before -= callback;
+
+    public void RemoveFixedUpdateAfter(Action<float> callback) 
+        => _onFixedUpdate_After -= callback;
+
+    public void RemoveFixedAfterUpdateBefore(Action<float> callback)
+        => _onFixedAfterUpdate_Before -= callback;
+
+    public void RemoveFixedAfterUpdateAfter(Action<float> callback) 
+        => _onFixedAfterUpdate_After -= callback;
+
     protected virtual void Awake()
     {
     }
