@@ -60,6 +60,12 @@ public sealed class ReplayRecorder
     {
         if (ReplayManager.IsRecording() == false)
             return;
+
+        // 남아있는 데이터 강제 Flush.
+        if (_cacheDataList.Count > 0)
+        {
+            Flush();
+        }
         
         _cacheDataList.Clear();
         _curChunkCount = 0;
