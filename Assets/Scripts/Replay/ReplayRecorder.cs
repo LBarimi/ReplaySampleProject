@@ -16,6 +16,7 @@ public enum REPLAY_ACTION_TYPE
     SPAWN_UNIT,
     DESPAWN_UNIT,
     INPUT_VECTOR,
+    INPUT_JUMP_DOWN,
     SYNC_TRANSFORM,
     SYNC_VELOCITY,
 }
@@ -100,6 +101,21 @@ public sealed class ReplayRecorder
         data.SetId(id);
         data.SetType(replayActionType);
         data.SetPosition(x, y, 0);
+        
+        Process(data);
+    }
+    
+    // input. (isInput)
+    public static void Set(REPLAY_ACTION_TYPE replayActionType, int id, bool isInput)
+    {
+        if (ReplayManager.IsRecording() == false)
+            return;
+        
+        var data = new ReplayCacheData();
+        data.SetCurFixedStep(GetStartRecordFixedStep());
+        data.SetId(id);
+        data.SetType(replayActionType);
+        data.SetInput(isInput);
         
         Process(data);
     }

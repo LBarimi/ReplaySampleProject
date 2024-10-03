@@ -12,6 +12,8 @@ public sealed class ReplayPlayer : MonoBehaviour
     
     private static ulong _curFixedStep;
 
+    public static float GetNormalizedProgress() => ReplayManager.IsReplaying() == false ? 0 : ((float)_curFixedStep / _cacheDataList[^1].GetCurFixedStep());
+
     public static void Play()
     {
         if (ReplayManager.IsRecording())
@@ -122,17 +124,59 @@ public sealed class ReplayPlayer : MonoBehaviour
             }
             case REPLAY_ACTION_TYPE.DESPAWN_UNIT:
                 break;
+            case REPLAY_ACTION_TYPE.INPUT_JUMP_DOWN:
+            {
+                var target = UnitManager.Get(data.GetId());
+
+                var isInput = data.GetInput();
+
+                target.GetInputController().SetKeyDown(INPUT_TYPE.JUMP, isInput);
+
+                break;
+            }
             case REPLAY_ACTION_TYPE.INPUT_VECTOR:
             {
                 var x = data.GetPosition().x;
                 var y = data.GetPosition().y;
-                
+
                 var target = UnitManager.Get(data.GetId());
 
                 target.GetInputController().movementInputValue = new Vector2Int(x, y);
-                
+
+                if (x == 1)
+                {
+                    target.GetInputController().SetKey(INPUT_TYPE.LEFT, false);
+                    target.GetInputController().SetKey(INPUT_TYPE.RIGHT, true);
+                }
+                else if (x == -1)
+                {
+                    target.GetInputController().SetKey(INPUT_TYPE.RIGHT, false);
+                    target.GetInputController().SetKey(INPUT_TYPE.LEFT, true);
+                }
+                else
+                {
+                    target.GetInputController().SetKey(INPUT_TYPE.RIGHT, false);
+                    target.GetInputController().SetKey(INPUT_TYPE.LEFT, false);
+                }
+
+                if (y == 1)
+                {
+                    target.GetInputController().SetKey(INPUT_TYPE.DOWN, false);
+                    target.GetInputController().SetKey(INPUT_TYPE.UP, true);
+                }
+                else if (y == -1)
+                {
+                    target.GetInputController().SetKey(INPUT_TYPE.UP, false);
+                    target.GetInputController().SetKey(INPUT_TYPE.DOWN, true);
+                }
+                else
+                {
+                    target.GetInputController().SetKey(INPUT_TYPE.UP, false);
+                    target.GetInputController().SetKey(INPUT_TYPE.DOWN, false);
+                }
+
                 break;
-            }
+        }
             case REPLAY_ACTION_TYPE.SYNC_TRANSFORM:
             {
                 var x = data.GetPosition().x.ToRate();

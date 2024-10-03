@@ -25,7 +25,7 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     protected void SetStatController(StatController statController)
         => _statController = statController;
 
-    protected StatController GetStatController()
+    public StatController GetStatController()
         => _statController;
 
     // 입력 관리.

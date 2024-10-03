@@ -37,7 +37,7 @@ public sealed class PlayerUnit : UnitBase
         GetStatController().GetStat(STAT_TYPE.CUR_HP).SetBaseValue(100);
         GetStatController().GetStat(STAT_TYPE.MOVESPEED).SetBaseValue(5);
         GetStatController().GetStat(STAT_TYPE.ROTATIONSPEED).SetBaseValue(20);
-        GetStatController().GetStat(STAT_TYPE.JUMPPOWER).SetBaseValue(10);
+        GetStatController().GetStat(STAT_TYPE.JUMPPOWER).SetBaseValue(50);
     }
 
     protected override void InitVisual()
@@ -71,6 +71,7 @@ public sealed class PlayerUnit : UnitBase
         GetInputController().Bind(INPUT_TYPE.UP, KeyCode.UpArrow);
         GetInputController().Bind(INPUT_TYPE.DOWN, KeyCode.S);
         GetInputController().Bind(INPUT_TYPE.DOWN, KeyCode.DownArrow);
+        GetInputController().Bind(INPUT_TYPE.JUMP, KeyCode.Space);
         GetInputController().Bind(INPUT_TYPE.F1, KeyCode.F1);
         GetInputController().Bind(INPUT_TYPE.F2, KeyCode.F2);
         GetInputController().Bind(INPUT_TYPE.F3, KeyCode.F3);
@@ -90,7 +91,9 @@ public sealed class PlayerUnit : UnitBase
             return;
 
         // Updates the animator during the physic loop in order to have the animation system synchronized with the physics engine.
-        GetAnimator().updateMode = AnimatorUpdateMode.AnimatePhysics;
+        //GetAnimator().updateMode = AnimatorUpdateMode.AnimatePhysics;
+
+        GetAnimator().enabled = false;
     }
 
     protected override void InitPhysics()
@@ -123,41 +126,49 @@ public sealed class PlayerUnit : UnitBase
         
         // Movement.
         var input = GetInputController();
-        var rigid = GetRigidBody();
 
         var inputVector = Vector2Int.zero;
 
-        // TODO : 흠;;;
-        if (ReplayManager.IsReplaying())
-        {
-            inputVector = input.movementInputValue;
-        }
+        if (input.GetKey(INPUT_TYPE.LEFT))
+            inputVector.x = -1;
+        else if (input.GetKey(INPUT_TYPE.RIGHT))
+            inputVector.x = 1;
         else
+            inputVector.x = 0;
+
+        if (input.GetKey(INPUT_TYPE.UP))
+            inputVector.y = 1;
+        else if (input.GetKey(INPUT_TYPE.DOWN))
+            inputVector.y = -1;
+        else
+            inputVector.y = 0;
+
+        // 이동값이 변경되었으면 녹화.
+        if (input.movementInputValue != inputVector)
         {
-            if (input.GetKey(INPUT_TYPE.LEFT))
-                inputVector.x = -1;
-            else if (input.GetKey(INPUT_TYPE.RIGHT))
-                inputVector.x = 1;
-            else
-                inputVector.x = 0;
-
-            if (input.GetKey(INPUT_TYPE.UP))
-                inputVector.y = 1;
-            else if (input.GetKey(INPUT_TYPE.DOWN))
-                inputVector.y = -1;
-            else
-                inputVector.y = 0;
-
-            // 이동값이 변경되었으면 녹화.
-            if (input.movementInputValue != inputVector)
-            {
-                ReplayRecorder.Set(REPLAY_ACTION_TYPE.INPUT_VECTOR, GetId(), inputVector.x, inputVector.y);
-                input.movementInputValue = inputVector;
-            }
+            ReplayRecorder.Set(REPLAY_ACTION_TYPE.INPUT_VECTOR, GetId(), inputVector.x, inputVector.y);
+            input.movementInputValue = inputVector;
         }
+            
+        // 점프 처리.
+        if (input.GetKeyDown(INPUT_TYPE.JUMP))
+        {
+            if (Physics.Raycast(transform.position, Vector3.down, 1f, 1 << LayerMask.NameToLayer("Ground")))
+            {
+                GetRigidBody().AddForce(Vector2.up * GetStatController().GetStat(STAT_TYPE.JUMPPOWER).GetFinal(), ForceMode.Impulse);
+            }
+
+            ReplayRecorder.Set(REPLAY_ACTION_TYPE.INPUT_JUMP_DOWN, GetId(), true);
+        }
+
+        // Down, Up의 상태를 해제한다.
+        input.ReleaseDownUp();
 
         // 걷는 애니메이션 재생.
         GetAnimator().SetFloat("Speed", inputVector == Vector2.zero ? 0 : 1);
+        
+        // 애니메이션 업데이트.
+        GetAnimator().Update(deltaTime);
         
         if (inputVector == Vector2.zero)
             return;
@@ -172,6 +183,9 @@ public sealed class PlayerUnit : UnitBase
         var lookDir = new Vector3(inputVector.x, 0, inputVector.y);
         var targetRotation = Quaternion.LookRotation(lookDir);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, GetStatController().GetStat(STAT_TYPE.ROTATIONSPEED).GetFinal() * deltaTime);
+        
+        // 물리.
+        GetRigidBody().velocity = GetRigidBody().velocity.Truncate();
         
         _onFixedUpdate_After?.Invoke(deltaTime);
     }
