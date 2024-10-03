@@ -6,7 +6,7 @@ public static class Utils
 
     public static GameObject SpawnGameObject(string key, Transform parent = null)
     {
-        var path = DataManager.GetString(key);
+        var path = KeyStringManager.GetString(key);
         var res = Resources.Load(path, typeof(GameObject)) as GameObject;
         var go = Object.Instantiate(res, parent, true);
         go.name = key;

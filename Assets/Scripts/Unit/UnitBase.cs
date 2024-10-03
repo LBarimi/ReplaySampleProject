@@ -6,9 +6,9 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     public bool IsMarkedForRemoval { get; set; }
 
     // 오브젝트 식별자.
-    public ulong id { get; set; }
+    public int id { get; set; }
 
-    public ulong GetId() 
+    public int GetId() 
         => id;
 
     public string _visualKey { get; set; }
@@ -102,16 +102,31 @@ public class UnitBase : MonoBehaviour, IUpdater, IObject
     protected virtual void Start()
     {
     }
-    
-    protected virtual void OnDestroy()
+
+    public void MarkForRemoval()
     {
         if (UpdateManager.Instance != null)
             UpdateManager.Instance.MarkForRemoval(this);
+        
+        DestroyImmediate(gameObject);
+    }
+    
+    protected virtual void OnDestroy()
+    {
+        if (UnitManager.Has(id))
+            UnitManager.Remove(id);
     }
 
+    public void SetId(int id)
+        => this.id = id;
+    
     public virtual void Init()
     {
-        id = UniqueIdGenerator.Get();
+        if (id == 0)
+            id = UniqueIdGenerator.Get();
+
+        if (UnitManager.Has(id) == false)
+            UnitManager.Add(id, this);
         
         if (UpdateManager.Instance != null)
             UpdateManager.Instance.Add(this);

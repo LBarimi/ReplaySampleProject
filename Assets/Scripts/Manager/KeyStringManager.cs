@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class DataManager
+public static class KeyStringManager
 {
     private static Dictionary<string, string> DataDict { get; set; } = new()
     {
@@ -16,7 +16,7 @@ public static class DataManager
     {
         if (DataDict.ContainsKey(key) == false)
         {
-            Debug.LogError($"[ERROR] DataManager::GetString {key} is notfound.");
+            Debug.LogError($"[ERROR] KeyStringManager::GetString {key} is notfound.");
             return string.Empty;
         }
 

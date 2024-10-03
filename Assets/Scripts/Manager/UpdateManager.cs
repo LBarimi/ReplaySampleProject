@@ -10,6 +10,14 @@ public sealed class UpdateManager : MonoBehaviour
     private List<IUpdater> _updateList = new();
 
     private WaitForFixedUpdate _waitForFixedUpdate = new();
+
+    private Action<float> _onFixedUpdate_Before;
+    
+    public void SetFixedUpdateBefore(Action<float> callback) 
+        => _onFixedUpdate_Before += callback;
+
+    public void RemoveFixedUpdateBefore(Action<float> callback) 
+        => _onFixedUpdate_Before -= callback;
     
     private void Awake()
     {
@@ -51,8 +59,20 @@ public sealed class UpdateManager : MonoBehaviour
     {
         var deltaTime = ReplayManager.GetFixedDeltaTime();
         
+        // 제거 예정인 업데이터를 제거한다.
+        for (var i = _updateList.Count - 1; i >= 0; i--)
+        {
+            if (_updateList[i].IsMarkedForRemoval)
+                _updateList.RemoveAt(i);
+        }
+        
+        _onFixedUpdate_Before?.Invoke(deltaTime);
+        
         for (var i = 0; i < _updateList.Count; i++)
         {
+            if (_updateList[i].IsMarkedForRemoval)
+                continue;
+            
             _updateList[i].OnFixedUpdate(deltaTime);
         }
     }
@@ -67,6 +87,9 @@ public sealed class UpdateManager : MonoBehaviour
             
             for (var i = 0; i < _updateList.Count; i++)
             {
+                if (_updateList[i].IsMarkedForRemoval)
+                    continue;
+                
                 _updateList[i].OnFixedAfterUpdate(deltaTime);
             }
         }

@@ -1,4 +1,4 @@
 public interface IObject
 {
-    public ulong id { get; set; }    
+    public int id { get; set; }    
 }

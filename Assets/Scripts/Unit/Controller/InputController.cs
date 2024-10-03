@@ -19,6 +19,8 @@ public sealed class InputController
 {
     private Dictionary<INPUT_TYPE, List<InputData>> InputDict { get; set; } = new();
 
+    public Vector2Int movementInputValue;
+    
     public void Init()
     {
         Clear();
@@ -27,6 +29,7 @@ public sealed class InputController
     public void Clear()
     {
         InputDict.Clear();
+        movementInputValue = Vector2Int.zero;
     }
 
     public void Bind(INPUT_TYPE inputType, KeyCode keyCode)

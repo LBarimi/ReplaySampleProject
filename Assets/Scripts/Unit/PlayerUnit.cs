@@ -8,7 +8,7 @@ public sealed class PlayerUnit : UnitBase
     public override void Init()
     {
         base.Init();
-        
+
         SetVisualKey("Visual_UnityChan");
         
         InitStat();
@@ -16,9 +16,15 @@ public sealed class PlayerUnit : UnitBase
         InitInput();
         InitAnimator();
         InitPhysics();
+        
+        if (TryGetComponent(typeof(ReplayTransformRecorder), out var com))
+            (com as ReplayTransformRecorder).Init(this);
 
-        var position = transform.position;
-        ReplayRecorder.Set(REPLAY_ACTION_TYPE.SPAWN_UNIT, GetVisualKey(), position.x, position.y, position.z);
+        transform.SetTruncatePosition();
+        transform.SetTruncateRotation();
+        
+        var pos = transform.position;
+        ReplayRecorder.Set(REPLAY_ACTION_TYPE.SPAWN_UNIT, GetId(), GetVisualKey(), pos.x, pos.y, pos.z);
     }
 
     protected override void InitStat()
@@ -26,7 +32,7 @@ public sealed class PlayerUnit : UnitBase
         base.InitStat();
         
         SetStatController(new StatController());
-        GetStatController().Init(GetId());
+        GetStatController().Init();
         GetStatController().GetStat(STAT_TYPE.MAX_HP).SetBaseValue(100);
         GetStatController().GetStat(STAT_TYPE.CUR_HP).SetBaseValue(100);
         GetStatController().GetStat(STAT_TYPE.MOVESPEED).SetBaseValue(5);
@@ -105,6 +111,9 @@ public sealed class PlayerUnit : UnitBase
     {
         var deltaTime = ReplayManager.GetDeltaTime();
 
+        if (ReplayManager.IsReplaying())
+            return;
+        
         GetInputController().OnUpdate(deltaTime);
     }
     
@@ -116,21 +125,36 @@ public sealed class PlayerUnit : UnitBase
         var input = GetInputController();
         var rigid = GetRigidBody();
 
-        var inputVector = Vector2.zero;
+        var inputVector = Vector2Int.zero;
 
-        if (input.GetKey(INPUT_TYPE.LEFT))
-            inputVector.x = -1.0f;
-        else if (input.GetKey(INPUT_TYPE.RIGHT))
-            inputVector.x = 1.0f;
+        // TODO : 흠;;;
+        if (ReplayManager.IsReplaying())
+        {
+            inputVector = input.movementInputValue;
+        }
         else
-            inputVector.x = 0;
+        {
+            if (input.GetKey(INPUT_TYPE.LEFT))
+                inputVector.x = -1;
+            else if (input.GetKey(INPUT_TYPE.RIGHT))
+                inputVector.x = 1;
+            else
+                inputVector.x = 0;
 
-        if (input.GetKey(INPUT_TYPE.UP))
-            inputVector.y = 1.0f;
-        else if (input.GetKey(INPUT_TYPE.DOWN))
-            inputVector.y = -1.0f;
-        else
-            inputVector.y = 0;
+            if (input.GetKey(INPUT_TYPE.UP))
+                inputVector.y = 1;
+            else if (input.GetKey(INPUT_TYPE.DOWN))
+                inputVector.y = -1;
+            else
+                inputVector.y = 0;
+
+            // 이동값이 변경되었으면 녹화.
+            if (input.movementInputValue != inputVector)
+            {
+                ReplayRecorder.Set(REPLAY_ACTION_TYPE.INPUT_VECTOR, GetId(), inputVector.x, inputVector.y);
+                input.movementInputValue = inputVector;
+            }
+        }
 
         // 걷는 애니메이션 재생.
         GetAnimator().SetFloat("Speed", inputVector == Vector2.zero ? 0 : 1);

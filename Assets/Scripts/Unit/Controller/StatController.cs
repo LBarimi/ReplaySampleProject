@@ -13,14 +13,10 @@ public enum STAT_TYPE
 
 public sealed class StatController
 {
-    private ulong _parentId;
-    
     private Dictionary<STAT_TYPE, StatData> StatDict { get; set; } = new();
 
-    public void Init(ulong parentId)
+    public void Init()
     {
-        _parentId = parentId;
-        
         Clear();
     }
     

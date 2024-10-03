@@ -4,6 +4,7 @@ using UnityEngine;
 public sealed class ReplayTransformRecorder : MonoBehaviour
 {
     private Rigidbody _rigid;
+    private int _id;
     
     // 리플레이 녹화용 변수.
     private int _x, _y, _z;
@@ -28,21 +29,17 @@ public sealed class ReplayTransformRecorder : MonoBehaviour
         _vz = INVALID_VALUE;
     }
 
-    private void Awake()
+    public void Init(UnitBase target)
     {
-        UnitBase target = null;
-
-        if (TryGetComponent(typeof(UnitBase), out var com))
-            target = com as UnitBase;
-
         if (target == null)
             return;
+
+        _id = target.GetId();
         
         target.SetFixedUpdateAfter(OnFixedUpdate);
         target.SetFixedAfterUpdateAfter(OnFixedAfterUpdate);
-        
-        if (TryGetComponent(typeof(Rigidbody), out com))
-            _rigid = com as Rigidbody;
+
+        _rigid = target.GetRigidBody();
         
         ClearRecordVariables();
     }
@@ -65,7 +62,7 @@ public sealed class ReplayTransformRecorder : MonoBehaviour
             _vy = vy;
             _vz = vz;
             
-            ReplayRecorder.Set(REPLAY_ACTION_TYPE.SYNC_VELOCITY, velocity.x, velocity.y, velocity.z);
+            ReplayRecorder.Set(REPLAY_ACTION_TYPE.SYNC_VELOCITY, _id, velocity.x, velocity.y, velocity.z);
         }
     }
 
@@ -96,7 +93,7 @@ public sealed class ReplayTransformRecorder : MonoBehaviour
             _qz = qz;
             _qw = qw;
 
-            ReplayRecorder.Set(REPLAY_ACTION_TYPE.SYNC_TRANSFORM, pos.x, pos.y, pos.z, quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+            ReplayRecorder.Set(REPLAY_ACTION_TYPE.SYNC_TRANSFORM, _id, pos.x, pos.y, pos.z, quaternion.x, quaternion.y, quaternion.z, quaternion.w);
         }
     }
 }
