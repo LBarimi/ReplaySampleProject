@@ -73,6 +73,14 @@ public sealed class ReplayManager : MonoBehaviour
 
         _isPendingStartRound = true;
     }
+
+    public static void StopRecord()
+    {
+        if (IsRecording() == false)
+            return;
+        
+        ReplayRecorder.Stop();
+    }
     
     private static void StartRoundInternal()
     {
